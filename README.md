@@ -1,0 +1,52 @@
+# Medical Tracker
+
+Medical Tracker is a family-first care logging app for serious illness. It helps caregivers record medication, symptoms, feelings, behaviour, food, notes, and medication plans in one shared timeline.
+
+This version is prepared as an OpenAI competition concept. The first screen explains the product, the workflow, and the family story behind it; the tracker remains a static web app that can run locally or on GitHub Pages.
+
+## Data Safety
+
+This competition copy does **not** include a default private Google Sheets endpoint. Sync is off until someone explicitly adds an Apps Script Web App URL in Settings.
+
+The browser storage keys are also separate from the original care-log app, so this duplicate will not read or overwrite the original app's local cached data.
+
+## Local Preview
+
+Run a static server from this folder:
+
+```sh
+python3 -m http.server 4173
+```
+
+Then open:
+
+```text
+http://localhost:4173
+```
+
+## Core Features
+
+- Product homepage and family story
+- One patient profile
+- Quick medication logging
+- Quick feeling, symptom, behaviour, food, and care-note logging
+- Standard medication plan
+- Today timeline
+- Searchable history
+- CSV and PDF exports
+- Optional Google Sheets sync through Apps Script
+
+## Google Sheets Backend
+
+The optional Apps Script backend is in:
+
+```text
+apps-script/Code.gs
+```
+
+It creates/uses these tabs:
+
+- `DailyLog`
+- `MedicationPlan`
+
+Deploy it as a Google Apps Script Web App, then paste the Web App URL into Settings.

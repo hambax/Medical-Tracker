@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f8fafc" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Medical Tracker" />
+    <title>Medical Tracker</title>
+    <script>
+      document.documentElement.classList.add("symbols-loading");
+    </script>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="preload" href="./assets/fonts/material-symbols-outlined.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260719-today-meds" />
+    <script>
+      const showSymbols = () => {
+        document.documentElement.classList.remove("symbols-loading");
+        document.documentElement.classList.add("symbols-ready");
+      };
+
+      if (document.fonts) {
+        document.fonts.load('24px "Material Symbols Outlined"').then(showSymbols, showSymbols);
+      } else {
+        showSymbols();
+      }
+    </script>
+  </head>
+  <body>
+    <main id="app">
+      <section class="landing-view" data-view="landing">
+        <div class="landing-shell">
+          <section class="landing-hero landing-hero-grid" aria-labelledby="landingTitle">
+            <div class="landing-hero-copy">
+              <h1 id="landingTitle">Medical tracking for every stage of serious care.</h1>
+              <p class="landing-lede">Bring medications, symptoms, food, mood, behaviour, and notes into one calm timeline families can share before appointments.</p>
+              <div class="landing-actions">
+                <button class="primary-button" id="openTrackerButton" type="button">
+                  <span class="material-symbols-outlined">monitor_heart</span>
+                  Open tracker
+                </button>
+                <button class="ghost-button landing-demo-button" data-demo-data type="button">
+                  <span class="material-symbols-outlined">database</span>
+                  Load demo data
+                </button>
+              </div>
+            </div>
+
+            <div class="landing-visual" aria-hidden="true">
+              <div class="brain-orbit">
+                <img src="./assets/brain-patient-image.png" alt="" />
+              </div>
+              <div class="hero-ui-card hero-ui-card-main">
+                <div class="mock-window-bar">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="mock-app-row">
+                  <span class="mock-icon medicine"></span>
+                  <div>
+                    <strong>08:00 medication</strong>
+                    <p>Levetiracetam logged by Caregiver A</p>
+                  </div>
+                  <em>Done</em>
+                </div>
+                <div class="mock-app-row">
+                  <span class="mock-icon symptom"></span>
+                  <div>
+                    <strong>10:15 symptom</strong>
+                    <p>Headache and nausea easing after rest</p>
+                  </div>
+                  <em>4/10</em>
+                </div>
+                <div class="mock-progress">
+                  <span style="height: 34%"></span>
+                  <span style="height: 68%"></span>
+                  <span style="height: 42%"></span>
+                  <span style="height: 78%"></span>
+                  <span style="height: 51%"></span>
+                  <span style="height: 64%"></span>
+                  <span style="height: 47%"></span>
+                </div>
+              </div>
+              <div class="hero-ui-card hero-ui-card-small">
+                <strong>Doctor review export</strong>
+                <p>90 days ready for clinic</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="bento-section" aria-labelledby="bentoTitle">
+            <div class="bento-heading">
+              <h2 id="bentoTitle">One place for the details care depends on.</h2>
+              <p>Medical Tracker is built for families who need a fast record during long days, changing plans, and high-stakes appointments.</p>
+            </div>
+
+            <div class="bento-grid">
+              <article class="bento-card bento-card-wide">
+                <div class="bento-copy">
+                  <h3>One shared care timeline</h3>
+                  <p>Capture the day as it happens, then scan the full story by time, category, and date.</p>
+                </div>
+                <div class="timeline-mock">
+                  <div>
+                    <span>07:45</span>
+                    <strong>Breakfast and steroid dose</strong>
+                    <p>Small bowl of oats, fluids encouraged.</p>
+                  </div>
+                  <div>
+                    <span>10:15</span>
+                    <strong>Headache checked</strong>
+                    <p>Moderate, improved with quiet rest.</p>
+                  </div>
+                  <div>
+                    <span>15:35</span>
+                    <strong>Clinic note</strong>
+                    <p>Questions prepared for oncology review.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="bento-card bento-card-gradient">
+                <div class="bento-copy">
+                  <h3>Medication plans that change with care</h3>
+                  <p>Track daily meds and keep the current plan readable when doctors adjust timing or support medicines.</p>
+                </div>
+                <div class="meds-mock">
+                  <div><span>08:00</span><strong>Anti-seizure</strong><em>Active</em></div>
+                  <div><span>08:30</span><strong>Steroid taper</strong><em>Review</em></div>
+                  <div><span>18:30</span><strong>Nausea support</strong><em>As needed</em></div>
+                </div>
+              </article>
+
+              <article class="bento-card">
+                <div class="bento-copy">
+                  <h3>Symptoms, mood, food, and behaviour</h3>
+                  <p>Record the small changes that are easy to lose at the end of a long day.</p>
+                </div>
+                <div class="signal-mock">
+                  <div class="signal-bars">
+                    <span style="height: 38%"></span>
+                    <span style="height: 54%"></span>
+                    <span style="height: 42%"></span>
+                    <span style="height: 78%"></span>
+                    <span style="height: 63%"></span>
+                    <span style="height: 48%"></span>
+                    <span style="height: 57%"></span>
+                    <span style="height: 35%"></span>
+                  </div>
+                  <p>Fatigue trend · appetite notes · sleep changes</p>
+                </div>
+              </article>
+
+              <article class="bento-card">
+                <div class="bento-copy">
+                  <h3>Export for appointments</h3>
+                  <p>Turn the care log into a compact doctor-review summary before a clinic visit.</p>
+                </div>
+                <div class="export-mock">
+                  <span>PDF review</span>
+                  <strong>142 logs</strong>
+                  <p>Medication, symptoms, food, behaviour, notes</p>
+                </div>
+              </article>
+
+              <article class="bento-card bento-card-soft">
+                <div class="bento-copy">
+                  <h3>Private by default</h3>
+                  <p>Use it locally first. Add Google Sheets sync only when the family chooses to connect a private backend.</p>
+                </div>
+                <div class="privacy-mock">
+                  <span class="material-symbols-outlined">lock</span>
+                  <div>
+                    <strong>Local-first</strong>
+                    <p>No private Sheet endpoint ships with the competition copy.</p>
+                  </div>
+                </div>
+              </article>
+
+              <article class="bento-card bento-card-story" id="story">
+                <div class="bento-copy">
+                  <h3>How it helped our family</h3>
+                  <p>When my dad was living with a brain tumour, care became a stream of medication timing, nausea, headaches, appetite, confusion, energy, and quiet changes that were easy to miss. This tracker helped us bring clearer notes into conversations with clinicians and care with more confidence until his passing.</p>
+                  <p>It also helped share the load. Family, caregivers, and the patient could take shifts without starting from scratch: one glance showed which medicines had been taken, what was still coming up, and whether anything looked missed.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="app-view is-hidden" data-view="app">
+        <aside class="sidebar" aria-label="Primary navigation">
+          <div class="sidebar-header">
+            <div class="sidebar-brand">
+              <span class="material-symbols-outlined">neurology</span>
+              <strong>Medical Tracker</strong>
+            </div>
+            <button class="icon-button nav-toggle" id="navToggle" type="button" aria-label="Collapse navigation" aria-expanded="true">
+              <span class="material-symbols-outlined">left_panel_close</span>
+            </button>
+          </div>
+          <nav>
+            <button class="nav-button is-active" data-route="today" type="button">
+              <span class="material-symbols-outlined">today</span>
+              <span class="nav-label">Today</span>
+            </button>
+            <button class="nav-button" data-route="meds-plan" type="button">
+              <span class="material-symbols-outlined">medication_liquid</span>
+              <span class="nav-label">Meds Plan</span>
+            </button>
+            <button class="nav-button" data-route="history" type="button">
+              <span class="material-symbols-outlined">history</span>
+              <span class="nav-label">History</span>
+            </button>
+            <button class="nav-button" data-demo-data type="button">
+              <span class="material-symbols-outlined">database</span>
+              <span class="nav-label">Demo Data</span>
+            </button>
+            <button class="nav-button" data-route="patient" type="button">
+              <span class="material-symbols-outlined">clinical_notes</span>
+              <span class="nav-label">Patient</span>
+            </button>
+            <button class="nav-button" data-route="settings" type="button">
+              <span class="material-symbols-outlined">settings</span>
+              <span class="nav-label">Settings</span>
+            </button>
+          </nav>
+        </aside>
+
+        <div class="main-shell">
+          <header class="topbar">
+            <div>
+              <p class="eyebrow" id="dateLabel">Today</p>
+              <h2 id="routeTitle">Today</h2>
+            </div>
+            <div class="topbar-actions">
+              <button class="primary-button topbar-save is-hidden" id="saveSettingsTopButton" type="button" disabled>
+                <span class="material-symbols-outlined">save</span>
+                Save settings
+              </button>
+              <button class="icon-button" id="syncButton" type="button" title="Refresh from spreadsheet" aria-label="Refresh from spreadsheet">
+                <span class="material-symbols-outlined">sync</span>
+              </button>
+            </div>
+          </header>
+
+          <section class="route is-active" data-route-panel="today">
+            <section class="quick-actions" aria-labelledby="quickActionsTitle">
+              <h3 id="quickActionsTitle">Quick log</h3>
+              <div class="quick-grid">
+                <button class="quick-button" data-entry-type="Medication" type="button">
+                  <span class="material-symbols-outlined">medication</span>
+                  <strong>Medication</strong>
+                </button>
+                <button class="quick-button" data-entry-type="Feeling" type="button">
+                  <span class="material-symbols-outlined">sentiment_satisfied</span>
+                  <strong>Feeling</strong>
+                </button>
+                <button class="quick-button" data-entry-type="Symptom" type="button">
+                  <span class="material-symbols-outlined">sick</span>
+                  <strong>Symptom</strong>
+                </button>
+                <button class="quick-button" data-entry-type="Behaviour" type="button">
+                  <span class="material-symbols-outlined">psychology</span>
+                  <strong>Behaviour</strong>
+                </button>
+                <button class="quick-button wide" data-entry-type="Food" type="button">
+                  <span class="material-symbols-outlined">restaurant</span>
+                  <strong>Food</strong>
+                </button>
+                <button class="quick-button wide" data-entry-type="Note" type="button">
+                  <span class="material-symbols-outlined">edit_note</span>
+                  <strong>Care note</strong>
+                </button>
+              </div>
+            </section>
+
+            <section class="today-meds-card" aria-labelledby="todayMedsPlanTitle">
+              <div class="section-heading">
+                <div>
+                  <h3 id="todayMedsPlanTitle">Up next on meds plan today</h3>
+                  <p class="today-meds-summary" id="todayMedsSummary">No meds plan loaded yet.</p>
+                </div>
+                <button class="ghost-button compact-button" data-route="meds-plan" type="button">
+                  <span class="material-symbols-outlined">medication_liquid</span>
+                  Edit plan
+                </button>
+              </div>
+              <div id="todayMedsPlan" class="today-meds-list"></div>
+            </section>
+
+            <section class="timeline-section" aria-labelledby="timelineTitle">
+              <div class="section-heading">
+                <h3 id="timelineTitle">Today’s timeline</h3>
+              </div>
+              <div id="todayTimeline" class="timeline"></div>
+            </section>
+          </section>
+
+          <section class="route" data-route-panel="meds-plan">
+            <section class="meds-plan-shell" aria-labelledby="medsPlanTitle">
+              <div class="section-heading">
+                <div>
+                  <h3 id="medsPlanTitle">Standard meds plan</h3>
+                  <p class="sync-hint" id="medsPlanSyncHint">Google Sheets sync is not configured on this device.</p>
+                </div>
+                <div class="meds-plan-actions">
+                  <button class="ghost-button" id="addMedsPlanItemButton" type="button">
+                    <span class="material-symbols-outlined">add</span>
+                    Add med time
+                  </button>
+                  <button class="primary-button" id="saveMedsPlanButton" type="button" disabled>
+                    <span class="material-symbols-outlined">save</span>
+                    Save meds plan
+                  </button>
+                </div>
+              </div>
+
+              <div class="meds-plan-views" role="tablist" aria-label="Medication plan views">
+                <button class="view-toggle is-active" data-meds-plan-view="time" type="button">By time</button>
+                <button class="view-toggle" data-meds-plan-view="medication" type="button">By medication</button>
+              </div>
+
+              <div id="medsPlanReadable" class="meds-plan-readable"></div>
+
+              <datalist id="medicationNamesList"></datalist>
+              <form id="medsPlanForm" class="meds-plan-form">
+                <div class="section-heading">
+                  <h3>Edit plan</h3>
+                </div>
+                <div id="medsPlanEditor" class="meds-plan-editor"></div>
+              </form>
+            </section>
+          </section>
+
+          <section class="route" data-route-panel="history">
+            <section class="export-panel" aria-labelledby="exportTitle">
+              <div class="section-heading">
+                <h3 id="exportTitle">Export for review</h3>
+                <span class="export-count" id="exportCount">0 logs</span>
+              </div>
+              <p class="sync-hint" id="syncHint">Google Sheets sync is not configured on this device.</p>
+              <div class="export-controls">
+                <label>
+                  Export
+                  <select id="exportScope">
+                    <option value="all">All logs</option>
+                    <option value="range">Date range</option>
+                  </select>
+                </label>
+                <label class="export-date-field is-hidden">
+                  From
+                  <input id="exportFrom" type="date" />
+                </label>
+                <label class="export-date-field is-hidden">
+                  To
+                  <input id="exportTo" type="date" />
+                </label>
+                <div class="export-actions">
+                  <button class="ghost-button" id="emailExportButton" type="button">
+                    <span class="material-symbols-outlined">mail</span>
+                    Email PDF + link
+                  </button>
+                  <button class="ghost-button" id="previewPdfButton" type="button">
+                    <span class="material-symbols-outlined">description</span>
+                    Preview PDF
+                  </button>
+                  <button class="ghost-button" id="downloadExportButton" type="button">
+                    <span class="material-symbols-outlined">download</span>
+                    Download
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <div class="filters">
+              <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input id="historySearch" type="search" placeholder="Search medication, symptom, behaviour, food, notes" />
+              </div>
+              <select id="typeFilter" aria-label="Filter by log type">
+                <option value="All">All logs</option>
+                <option value="Medication">Medication</option>
+                <option value="Feeling">Feeling</option>
+                <option value="Symptom">Symptom</option>
+                <option value="Behaviour">Behaviour</option>
+                <option value="Food">Food</option>
+                <option value="Note">Notes</option>
+              </select>
+              <select id="historyDateScope" aria-label="Filter by date range">
+                <option value="all">All history</option>
+                <option value="range">Date range</option>
+              </select>
+              <label class="history-date-filter is-hidden">
+                From
+                <input id="historyFrom" type="date" />
+              </label>
+              <label class="history-date-filter is-hidden">
+                To
+                <input id="historyTo" type="date" />
+              </label>
+            </div>
+            <div id="historyTimeline" class="timeline"></div>
+          </section>
+
+          <section class="route" data-route-panel="patient">
+            <form id="patientForm" class="patient-form">
+              <section class="brain-visual-panel">
+                <!-- Decorative, non-diagnostic visual. Static only so the Patient page keeps the clearer high-resolution image. -->
+                <img class="brain-visual" src="./assets/brain-patient-image.png" alt="" decoding="async" />
+              </section>
+              <label>
+                Patient name
+                <input name="name" type="text" />
+              </label>
+              <label>
+                Recovery context
+                <textarea name="context" rows="3"></textarea>
+              </label>
+              <label>
+                Current medication list
+                <textarea name="medications" rows="4"></textarea>
+              </label>
+              <label>
+                Symptoms to watch
+                <textarea name="watchList" rows="4"></textarea>
+              </label>
+              <label>
+                Emergency plan
+                <textarea name="emergency" rows="4"></textarea>
+              </label>
+              <button class="primary-button" type="submit">
+                <span class="material-symbols-outlined">save</span>
+                Save patient info
+              </button>
+            </form>
+          </section>
+
+          <section class="route" data-route-panel="settings">
+            <form id="settingsForm" class="settings-form">
+              <section class="settings-panel">
+                <div class="section-heading">
+                  <h3>Google Sheets sync</h3>
+                </div>
+                <div class="settings-row sheet-settings-row">
+                  <label>
+                    Apps Script Web App URL
+                    <input id="sheetApiUrl" name="sheetApiUrl" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/.../exec" />
+                  </label>
+                  <button class="ghost-button" id="copySetupLinkButton" type="button">
+                    <span class="material-symbols-outlined">link</span>
+                    Copy setup link
+                  </button>
+                </div>
+              </section>
+
+              <section class="settings-panel">
+                <div class="section-heading">
+                  <h3>Default medications</h3>
+                  <button class="text-button" id="addMedicationSetting" type="button">Add medication</button>
+                </div>
+                <div id="medicationSettingsList" class="settings-list"></div>
+              </section>
+
+              <section class="settings-panel">
+                <div class="section-heading">
+                  <h3>Default caregivers</h3>
+                  <button class="text-button" id="addCaregiverSetting" type="button">Add caregiver</button>
+                </div>
+                <div id="caregiverSettingsList" class="settings-list"></div>
+              </section>
+            </form>
+          </section>
+        </div>
+
+        <nav class="bottom-nav" aria-label="Mobile navigation">
+          <button class="nav-button is-active" data-route="today" type="button">
+            <span class="material-symbols-outlined">today</span>
+            Today
+          </button>
+          <button class="nav-button" data-route="meds-plan" type="button">
+            <span class="material-symbols-outlined">medication_liquid</span>
+            Meds
+          </button>
+          <button class="nav-button" data-route="history" type="button">
+            <span class="material-symbols-outlined">history</span>
+            History
+          </button>
+          <button class="nav-button" data-demo-data type="button">
+            <span class="material-symbols-outlined">database</span>
+            Demo
+          </button>
+          <button class="nav-button" data-route="patient" type="button">
+            <span class="material-symbols-outlined">clinical_notes</span>
+            Patient
+          </button>
+          <button class="nav-button" data-route="settings" type="button">
+            <span class="material-symbols-outlined">settings</span>
+            Settings
+          </button>
+        </nav>
+      </section>
+    </main>
+
+    <dialog id="entryDialog">
+      <form id="entryForm" method="dialog">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow" id="entryEyebrow">Quick log</p>
+            <h3 id="entryTitle">Medication</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <input type="hidden" name="type" />
+
+        <div class="field-row date-time-row">
+          <div class="picker-field">
+            <span>Date</span>
+            <button class="picker-control" data-picker="date" type="button">
+              <span id="dateDisplay">Today</span>
+              <span class="material-symbols-outlined">calendar_month</span>
+            </button>
+            <input name="date" type="hidden" />
+          </div>
+          <div class="picker-field">
+            <span>Time</span>
+            <button class="picker-control" data-picker="time" type="button">
+              <span id="timeDisplay">Now</span>
+              <span class="material-symbols-outlined">schedule</span>
+            </button>
+            <input name="time" type="hidden" />
+          </div>
+        </div>
+
+        <div class="picker-popover is-hidden" id="datePicker" aria-label="Choose date"></div>
+        <div class="picker-popover time-popover is-hidden" id="timePicker" aria-label="Choose time"></div>
+
+        <div class="dynamic-fields" id="dynamicFields"></div>
+
+        <label>
+          Notes
+          <textarea name="notes" rows="3" placeholder="What happened? What helped?"></textarea>
+        </label>
+
+        <div class="dialog-actions">
+          <button class="ghost-button" value="cancel" type="submit">Cancel</button>
+          <button class="primary-button" id="saveEntryButton" value="default" type="submit">
+            <span class="material-symbols-outlined">add_circle</span>
+            Save log
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="pdfPreviewDialog" class="pdf-dialog">
+      <form method="dialog">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Export</p>
+            <h3>PDF preview</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div id="pdfPreviewContent" class="pdf-preview-content"></div>
+        <div class="dialog-actions">
+          <button class="ghost-button" value="cancel" type="submit">Close</button>
+          <button class="primary-button" id="printPdfButton" value="default" type="button">
+            <span class="material-symbols-outlined">print</span>
+            Print or save PDF
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="downloadDialog" class="export-dialog">
+      <form id="downloadForm" method="dialog">
+        <div class="dialog-heading">
+          <div>
+            <h3>Download export</h3>
+            <p class="dialog-subtitle" id="downloadSummary">Choose a file type for the selected logs.</p>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="export-dialog-grid">
+          <label>
+            File type
+            <select id="downloadFileType" name="downloadFileType">
+              <option value="csv">CSV spreadsheet</option>
+              <option value="pdf">PDF review sheet</option>
+            </select>
+          </label>
+          <label>
+            File name
+            <input id="downloadFilename" name="downloadFilename" type="text" />
+          </label>
+        </div>
+
+        <div class="download-format-note" id="downloadFormatNote">
+          CSV is best for spreadsheets, filtering, and importing into other tools.
+        </div>
+
+        <div class="dialog-actions">
+          <button class="ghost-button" value="cancel" type="submit">Cancel</button>
+          <button class="primary-button" id="confirmDownloadButton" value="download" type="submit">
+            <span class="material-symbols-outlined">download</span>
+            Download
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="pdfPrintArea" class="pdf-print-area" aria-hidden="true"></div>
+
+    <script src="./app.js?v=20260719-today-meds"></script>
+  </body>
+</html>
