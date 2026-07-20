@@ -417,11 +417,17 @@ strong {
 }
 
 .bento-card-story {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 248, 255, 0.88)),
-    url("./assets/brain-patient-image.png") right bottom / 42% auto no-repeat;
+  background: linear-gradient(135deg, #ffffff 0%, #f5fbff 100%);
   grid-column: span 8;
   min-height: 300px;
+}
+
+.bento-card-story .bento-copy {
+  max-width: 820px;
+}
+
+.bento-card-story .bento-copy p + p {
+  margin-top: 12px;
 }
 
 .bento-card-gradient {
@@ -627,24 +633,114 @@ textarea {
 
 select {
   appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--text-soft) 50%),
-    linear-gradient(135deg, var(--text-soft) 50%, transparent 50%),
-    linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-  background-position:
-    calc(100% - 22px) 22px,
-    calc(100% - 16px) 22px,
-    0 0;
-  background-repeat: no-repeat;
-  background-size:
-    6px 6px,
-    6px 6px,
-    100% 100%;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
   border-color: var(--border-control);
   border-radius: var(--control-radius);
   font-weight: var(--font-regular);
   min-height: var(--control-height);
   padding-right: 42px;
+}
+
+.native-select-hidden {
+  height: 1px;
+  left: 0;
+  min-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 1px;
+}
+
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-button {
+  align-items: center;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid var(--border-control);
+  border-radius: var(--control-radius);
+  color: var(--text);
+  display: grid;
+  font: inherit;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  height: var(--control-height);
+  justify-items: start;
+  line-height: 1.2;
+  min-height: var(--control-height);
+  outline: none;
+  padding: 0 12px 0 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.custom-select-button:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus-ring-soft);
+}
+
+.custom-select-button .custom-select-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-button .material-symbols-outlined {
+  background: var(--surface-blue);
+  border-radius: var(--radius-card);
+  color: var(--text-soft);
+  font-size: 24px;
+  height: 34px;
+  line-height: 34px;
+  text-align: center;
+  transition: transform 140ms ease;
+  width: 34px;
+}
+
+.custom-select.is-open .custom-select-button .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.custom-select-menu {
+  background: #ffffff;
+  border: 1px solid var(--border-control);
+  border-radius: var(--control-radius);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
+  display: grid;
+  gap: 4px;
+  left: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 60;
+}
+
+.custom-select-option {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-card);
+  color: var(--text);
+  font: inherit;
+  min-height: 42px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.custom-select-option:hover,
+.custom-select-option.is-selected {
+  background: var(--surface-blue);
+  color: var(--text-heading);
+}
+
+.custom-select-option:disabled {
+  color: var(--muted-light);
 }
 
 textarea {
@@ -660,6 +756,10 @@ select:focus,
 textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--focus-ring-soft);
+}
+
+input[list]::-webkit-calendar-picker-indicator {
+  display: none !important;
 }
 
 .search-box {
@@ -1252,6 +1352,184 @@ nav {
   white-space: nowrap;
 }
 
+.trend-panel,
+.trend-insights {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.045);
+  display: grid;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.trend-heading {
+  align-items: start;
+  gap: 16px;
+}
+
+.trend-subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 4px 0 0;
+}
+
+.trend-range-controls {
+  background: #f8fbff;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(4, minmax(78px, 1fr));
+  padding: 6px;
+}
+
+.trend-range-controls .view-toggle {
+  min-height: 40px;
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
+.trend-stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.trend-stat {
+  background: #f8fbff;
+  border: 1px solid #e4edf6;
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.trend-stat span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.trend-stat strong {
+  color: var(--text-heading);
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  line-height: 1;
+}
+
+.trend-stat p {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.trend-chart-shell {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(249, 115, 22, 0.1), transparent 28%),
+    radial-gradient(circle at 10% 0%, rgba(14, 165, 233, 0.12), transparent 34%),
+    #ffffff;
+  border: 1px solid #e4edf6;
+  border-radius: var(--radius-card);
+  min-height: 320px;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.trend-chart {
+  display: block;
+  height: auto;
+  max-height: 360px;
+  width: 100%;
+}
+
+.trend-grid-line {
+  stroke: #e4edf6;
+  stroke-width: 1;
+}
+
+.trend-y-label,
+.trend-x-label {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.trend-y-label {
+  dominant-baseline: middle;
+  text-anchor: end;
+}
+
+.trend-x-label {
+  text-anchor: middle;
+}
+
+.trend-area {
+  fill: url("#fatigueTrendFill");
+}
+
+.trend-line {
+  fill: none;
+  stroke: #7c3aed;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.trend-point {
+  fill: #ffffff;
+  stroke: #7c3aed;
+  stroke-width: 3;
+}
+
+.trend-summary-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trend-summary-list article {
+  align-items: start;
+  background: #f8fbff;
+  border: 1px solid #e4edf6;
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr;
+  padding: 12px 14px;
+}
+
+.trend-summary-list .material-symbols-outlined {
+  color: var(--accent-strong);
+  font-size: 24px;
+}
+
+.trend-summary-list p,
+.trend-ai-result p {
+  color: var(--text-soft);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.trend-ai-result {
+  background: #fbf8ff;
+  border: 1px solid #e9d5ff;
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.trend-ai-result h4 {
+  margin: 0;
+}
+
+.trend-ai-result ul {
+  color: var(--text-soft);
+  margin: 0;
+  padding-left: 20px;
+}
+
 .pdf-dialog {
   max-width: min(1120px, calc(100% - 28px));
   width: min(1120px, calc(100% - 28px));
@@ -1586,16 +1864,22 @@ nav {
 
 .meds-plan-card-actions {
   align-items: end;
-  display: grid;
+  display: flex;
   gap: 10px;
-  grid-template-columns: repeat(2, max-content);
-  justify-content: end;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  min-width: 0;
+  width: 100%;
 }
 
 .meds-plan-remove {
   align-self: end;
-  justify-self: stretch;
+  justify-self: start;
   padding-inline: 20px;
+}
+
+.meds-plan-save-item {
+  margin-left: auto;
 }
 
 .meds-plan-remove .material-symbols-outlined {
@@ -1604,13 +1888,12 @@ nav {
 
 .control-icon-field {
   align-items: center;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
+  display: block;
   position: relative;
 }
 
 .control-icon-field input {
-  padding-right: 46px;
+  padding-right: 56px;
 }
 
 .control-icon-field > .material-symbols-outlined {
@@ -1624,8 +1907,14 @@ nav {
   justify-content: center;
   pointer-events: none;
   position: absolute;
-  right: 10px;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 34px;
+}
+
+.dropdown-icon-field > .material-symbols-outlined {
+  color: var(--text-soft);
 }
 
 .meds-plan-accordion {
@@ -1712,6 +2001,10 @@ nav {
 
 .settings-row.sheet-settings-row {
   grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.settings-row.ai-settings-row {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .settings-action {
@@ -2285,6 +2578,21 @@ legend {
     grid-template-columns: 1fr;
   }
 
+  .trend-heading,
+  .trend-insights .section-heading {
+    align-items: stretch;
+    display: grid;
+    gap: 14px;
+  }
+
+  .trend-range-controls {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .trend-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .export-controls > label:first-child,
   .export-controls .export-date-field,
   .export-controls .export-date-field + .export-date-field,
@@ -2342,7 +2650,7 @@ legend {
     bottom: 0;
     display: grid;
     gap: 6px;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     left: 0;
     padding: 8px;
     position: fixed;
@@ -2352,7 +2660,7 @@ legend {
   .bottom-nav .nav-button {
     align-items: center;
     flex-direction: column;
-    font-size: 0.66rem;
+    font-size: 0.6rem;
     gap: 2px;
     justify-content: center;
     min-height: var(--control-height);
@@ -2361,6 +2669,10 @@ legend {
     padding: 6px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .bottom-nav .nav-button .material-symbols-outlined {
+    font-size: 24px;
   }
 }
 
@@ -2423,15 +2735,31 @@ legend {
   }
 
   .bento-card-story {
-    background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 248, 255, 0.92)),
-      url("./assets/brain-patient-image.png") right bottom / 58% auto no-repeat;
+    background: linear-gradient(135deg, #ffffff 0%, #f5fbff 100%);
   }
 
   .timeline-mock div,
   .meds-mock div,
   .today-med-item {
     grid-template-columns: 1fr;
+  }
+
+  .trend-panel,
+  .trend-insights {
+    padding: 14px;
+  }
+
+  .trend-range-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trend-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-chart-shell {
+    min-height: 250px;
+    padding: 8px;
   }
 
   .today-med-status {
@@ -2444,7 +2772,8 @@ legend {
   .meds-plan-editor-row,
   .settings-row,
   .settings-row.caregiver-row,
-  .settings-row.sheet-settings-row {
+  .settings-row.sheet-settings-row,
+  .settings-row.ai-settings-row {
     grid-template-columns: 1fr;
   }
 

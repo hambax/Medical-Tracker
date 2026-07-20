@@ -5,9 +5,11 @@ const MEDICATION_OPTIONS_KEY = "medical_tracker_medication_options_v1";
 const CAREGIVER_OPTIONS_KEY = "medical_tracker_caregiver_options_v1";
 const MEDS_PLAN_KEY = "medical_tracker_meds_plan_v1";
 const SHEET_API_URL_KEY = "medical_tracker_sheet_api_url_v1";
+const AI_SUMMARY_API_URL_KEY = "medical_tracker_ai_summary_api_url_v1";
 const DEFAULT_SHEET_API_URL = "";
 const GOOGLE_SHEET_URL = "";
 let sheetApiUrl = DEFAULT_SHEET_API_URL;
+let aiSummaryApiUrl = "";
 
 const state = {
   entries: [],
@@ -28,6 +30,7 @@ const routeTitles = {
   "meds-plan": "Meds Plan",
   history: "History",
   patient: "Patient",
+  trends: "Trends",
   settings: "Settings"
 };
 
@@ -83,6 +86,7 @@ const medicationSettingsList = document.querySelector("#medicationSettingsList")
 const caregiverSettingsList = document.querySelector("#caregiverSettingsList");
 const saveSettingsTopButton = document.querySelector("#saveSettingsTopButton");
 const sheetApiUrlInput = document.querySelector("#sheetApiUrl");
+const aiSummaryApiUrlInput = document.querySelector("#aiSummaryApiUrl");
 const copySetupLinkButton = document.querySelector("#copySetupLinkButton");
 const syncButton = document.querySelector("#syncButton");
 const exportScope = document.querySelector("#exportScope");
@@ -106,15 +110,22 @@ const downloadFileType = document.querySelector("#downloadFileType");
 const downloadFilename = document.querySelector("#downloadFilename");
 const downloadSummary = document.querySelector("#downloadSummary");
 const downloadFormatNote = document.querySelector("#downloadFormatNote");
+const fatigueStats = document.querySelector("#fatigueStats");
+const fatigueChart = document.querySelector("#fatigueChart");
+const fatigueSummary = document.querySelector("#fatigueSummary");
+const fatigueAiResult = document.querySelector("#fatigueAiResult");
+const aiFatigueSummaryButton = document.querySelector("#aiFatigueSummaryButton");
 
 let pickerMonth = new Date();
 const dirtySettings = {
   medication: new Set(),
   caregiver: new Set(),
-  sheet: false
+  sheet: false,
+  ai: false
 };
 let isMedsPlanDirty = false;
 const expandedMedsPlanItems = new Set();
+let trendRange = "30";
 
 function loadState() {
   const savedEntries = localStorage.getItem(STORAGE_KEY);
@@ -123,6 +134,7 @@ function loadState() {
   const savedCaregivers = localStorage.getItem(CAREGIVER_OPTIONS_KEY);
   const savedMedsPlan = localStorage.getItem(MEDS_PLAN_KEY);
   const savedSheetApiUrl = localStorage.getItem(SHEET_API_URL_KEY);
+  const savedAiSummaryApiUrl = localStorage.getItem(AI_SUMMARY_API_URL_KEY);
   const setupSheetApiUrl = setupSheetUrlFromLocation();
 
   state.entries = savedEntries ? JSON.parse(savedEntries) : seedEntries();
@@ -131,6 +143,7 @@ function loadState() {
   presets.caregivers = savedCaregivers ? JSON.parse(savedCaregivers) : presets.caregivers;
   state.medsPlan = normalizeMedsPlan(savedMedsPlan ? JSON.parse(savedMedsPlan) : []);
   sheetApiUrl = setupSheetApiUrl || savedSheetApiUrl || DEFAULT_SHEET_API_URL;
+  aiSummaryApiUrl = savedAiSummaryApiUrl || "";
 
   if (!savedEntries) saveEntries();
   if (!savedPatient) savePatient();
@@ -150,6 +163,19 @@ function saveEntries() {
 
 function saveMedsPlanLocal() {
   localStorage.setItem(MEDS_PLAN_KEY, JSON.stringify(state.medsPlan));
+}
+
+function saveAiSummaryApiUrl() {
+  aiSummaryApiUrl = aiSummaryApiUrlInput.value.trim();
+  if (aiSummaryApiUrl) {
+    localStorage.setItem(AI_SUMMARY_API_URL_KEY, aiSummaryApiUrl);
+  } else {
+    localStorage.removeItem(AI_SUMMARY_API_URL_KEY);
+  }
+}
+
+function aiSummaryEnabled() {
+  return aiSummaryApiUrl.startsWith("https://");
 }
 
 function syncEnabled() {
@@ -667,6 +693,266 @@ function renderToday() {
   renderTimeline(document.querySelector("#todayTimeline"), todayEntries);
 }
 
+function entryValues(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  return String(value).split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function isFatigueSymptomEntry(entry) {
+  return entry.type === "Symptom"
+    && entryValues(entry.symptom).some((symptom) => symptom.toLowerCase() === "fatigue")
+    && Number.isFinite(Number(entry.severity));
+}
+
+function fatigueLogs() {
+  return sortEntries(state.entries.filter(isFatigueSymptomEntry)).map((entry) => ({
+    ...entry,
+    severityScore: Math.max(0, Math.min(10, Number(entry.severity)))
+  }));
+}
+
+function trendStartDate(range) {
+  if (range === "all") return "";
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - Number(range) + 1);
+  return localDateString(date);
+}
+
+function filterTrendLogs(logs) {
+  const start = trendStartDate(trendRange);
+  return start ? logs.filter((entry) => entry.date >= start) : logs;
+}
+
+function fatigueDailyPoints(logs) {
+  const groups = new Map();
+  logs.forEach((entry) => {
+    const existing = groups.get(entry.date);
+    if (!existing || entry.severityScore > existing.severity) {
+      groups.set(entry.date, {
+        date: entry.date,
+        severity: entry.severityScore,
+        time: entry.time,
+        notes: entry.notes || ""
+      });
+    }
+  });
+  return [...groups.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function average(values) {
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function formatAverage(value) {
+  return value == null ? "No data" : value.toFixed(1).replace(/\.0$/, "");
+}
+
+function lastNDaysAverage(points, days, offsetDays = 0) {
+  const end = new Date();
+  end.setHours(0, 0, 0, 0);
+  end.setDate(end.getDate() - offsetDays);
+  const start = new Date(end);
+  start.setDate(end.getDate() - days + 1);
+  const startValue = localDateString(start);
+  const endValue = localDateString(end);
+  return average(points.filter((point) => point.date >= startValue && point.date <= endValue).map((point) => point.severity));
+}
+
+function trendDirectionLabel(currentAverage, previousAverage) {
+  if (currentAverage == null || previousAverage == null) return "Not enough recent data yet.";
+  const delta = currentAverage - previousAverage;
+  if (Math.abs(delta) < 0.5) return "Fatigue has been broadly steady compared with the previous week.";
+  if (delta > 0) return `Fatigue is averaging ${delta.toFixed(1)} points higher than the previous week.`;
+  return `Fatigue is averaging ${Math.abs(delta).toFixed(1)} points lower than the previous week.`;
+}
+
+function nearbyEntriesForFatigue(points) {
+  const fatigueDates = new Set(points.map((point) => point.date));
+  return sortEntries(state.entries.filter((entry) => {
+    if (!fatigueDates.has(entry.date)) return false;
+    if (entry.type === "Symptom" && isFatigueSymptomEntry(entry)) return false;
+    return ["Medication", "Food", "Feeling", "Note"].includes(entry.type);
+  })).slice(0, 18);
+}
+
+function renderFatigueStats(points, logs) {
+  const latest = points.at(-1);
+  const currentAverage = lastNDaysAverage(points, 7);
+  const previousAverage = lastNDaysAverage(points, 7, 7);
+  const highest = points.reduce((max, point) => !max || point.severity > max.severity ? point : max, null);
+  const stats = [
+    ["Latest", latest ? `${latest.severity}/10` : "No data", latest ? formatShortDate(latest.date) : "Add fatigue logs"],
+    ["7-day avg", formatAverage(currentAverage), trendDirectionLabel(currentAverage, previousAverage)],
+    ["Previous 7 days", formatAverage(previousAverage), "For comparison"],
+    ["Highest day", highest ? `${highest.severity}/10` : "No data", highest ? formatShortDate(highest.date) : "No peak yet"],
+    ["Fatigue logs", String(logs.length), `${points.length} ${points.length === 1 ? "day" : "days"} charted`]
+  ];
+
+  fatigueStats.innerHTML = stats.map(([label, value, detail]) => `
+    <article class="trend-stat">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <p>${escapeHtml(detail)}</p>
+    </article>
+  `).join("");
+}
+
+function renderFatigueChart(points) {
+  if (!points.length) {
+    fatigueChart.innerHTML = '<div class="empty-state">No fatigue logs yet. Log Symptom -> Fatigue to start tracking.</div>';
+    return;
+  }
+
+  const width = 720;
+  const height = 300;
+  const padding = { top: 24, right: 24, bottom: 42, left: 48 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const xFor = (index) => padding.left + (points.length === 1 ? chartWidth / 2 : (index / (points.length - 1)) * chartWidth);
+  const yFor = (severity) => padding.top + ((10 - severity) / 10) * chartHeight;
+  const coordinates = points.map((point, index) => `${xFor(index).toFixed(1)},${yFor(point.severity).toFixed(1)}`);
+  const areaPath = `M ${coordinates[0]} L ${coordinates.join(" L ")} L ${xFor(points.length - 1).toFixed(1)},${padding.top + chartHeight} L ${xFor(0).toFixed(1)},${padding.top + chartHeight} Z`;
+  const tickIndexes = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
+
+  fatigueChart.innerHTML = `
+    <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Fatigue severity trend from zero to ten">
+      <defs>
+        <linearGradient id="fatigueTrendFill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.26" />
+          <stop offset="100%" stop-color="#f97316" stop-opacity="0.04" />
+        </linearGradient>
+      </defs>
+      ${[0, 2, 4, 6, 8, 10].map((tick) => `
+        <line class="trend-grid-line" x1="${padding.left}" x2="${width - padding.right}" y1="${yFor(tick).toFixed(1)}" y2="${yFor(tick).toFixed(1)}" />
+        <text class="trend-y-label" x="${padding.left - 14}" y="${yFor(tick).toFixed(1)}">${tick}</text>
+      `).join("")}
+      <path class="trend-area" d="${areaPath}" />
+      <polyline class="trend-line" points="${coordinates.join(" ")}" />
+      ${points.map((point, index) => `
+        <circle class="trend-point" cx="${xFor(index).toFixed(1)}" cy="${yFor(point.severity).toFixed(1)}" r="${point === points.at(-1) ? 5.5 : 4}">
+          <title>${escapeHtml(formatShortDate(point.date))}: ${point.severity}/10${point.notes ? ` - ${escapeHtml(point.notes)}` : ""}</title>
+        </circle>
+      `).join("")}
+      ${tickIndexes.map((index) => `
+        <text class="trend-x-label" x="${xFor(index).toFixed(1)}" y="${height - 12}">${escapeHtml(formatShortDate(points[index].date).slice(0, 5))}</text>
+      `).join("")}
+    </svg>
+  `;
+}
+
+function renderFatigueSummary(points) {
+  if (!points.length) {
+    fatigueSummary.innerHTML = '<div class="empty-state">Patterns will appear here once fatigue symptom logs have been added.</div>';
+    fatigueAiResult.classList.add("is-hidden");
+    return;
+  }
+
+  const currentAverage = lastNDaysAverage(points, 7);
+  const previousAverage = lastNDaysAverage(points, 7, 7);
+  const latest = points.at(-1);
+  const highest = points.reduce((max, point) => point.severity > max.severity ? point : max, points[0]);
+  const nearby = nearbyEntriesForFatigue(points);
+  const relatedTypes = [...new Set(nearby.map((entry) => entry.type))].slice(0, 4);
+  const prompts = [
+    trendDirectionLabel(currentAverage, previousAverage),
+    `Latest fatigue log was ${latest.severity}/10 on ${formatShortDate(latest.date)}.`,
+    `Highest charted fatigue was ${highest.severity}/10 on ${formatShortDate(highest.date)}.`,
+    relatedTypes.length
+      ? `Review nearby ${relatedTypes.join(", ").toLowerCase()} entries with the care team for context.`
+      : "Add notes, food, feeling, and medication logs on fatigue days to give the care team more context."
+  ];
+
+  fatigueSummary.innerHTML = `
+    <div class="trend-summary-list">
+      ${prompts.map((prompt) => `
+        <article>
+          <span class="material-symbols-outlined">forum</span>
+          <p>${escapeHtml(prompt)}</p>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function trendRangeLabel() {
+  if (trendRange === "all") return "all";
+  return `${trendRange} days`;
+}
+
+function updateTrendRangeButtons() {
+  document.querySelectorAll("[data-trend-range]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.trendRange === trendRange);
+  });
+}
+
+function renderTrends() {
+  updateTrendRangeButtons();
+  aiFatigueSummaryButton.classList.toggle("is-hidden", !aiSummaryEnabled());
+  const logs = filterTrendLogs(fatigueLogs());
+  const points = fatigueDailyPoints(logs);
+  renderFatigueStats(points, logs);
+  renderFatigueChart(points);
+  renderFatigueSummary(points);
+  if (!aiSummaryEnabled()) fatigueAiResult.classList.add("is-hidden");
+}
+
+async function requestFatigueAiSummary() {
+  if (!aiSummaryEnabled()) return;
+  const logs = filterTrendLogs(fatigueLogs());
+  const points = fatigueDailyPoints(logs);
+  if (!points.length) {
+    fatigueAiResult.classList.remove("is-hidden");
+    fatigueAiResult.innerHTML = '<p>Add fatigue symptom logs before requesting an AI summary.</p>';
+    return;
+  }
+
+  aiFatigueSummaryButton.disabled = true;
+  aiFatigueSummaryButton.innerHTML = '<span class="material-symbols-outlined">progress_activity</span> Summarising';
+  fatigueAiResult.classList.remove("is-hidden");
+  fatigueAiResult.innerHTML = '<p>Preparing a cautious appointment summary...</p>';
+
+  try {
+    const response = await fetch(aiSummaryApiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patientContext: state.patient.context || "",
+        range: trendRangeLabel(),
+        fatiguePoints: points,
+        nearbyEntries: nearbyEntriesForFatigue(points).map((entry) => ({
+          date: entry.date,
+          time: entry.time,
+          type: entry.type,
+          title: entryTitle(entry),
+          notes: entry.notes || "",
+          severity: entry.severity || ""
+        }))
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) throw new Error(payload.error || "Could not generate the AI summary.");
+
+    const prompts = Array.isArray(payload.discussionPrompts) ? payload.discussionPrompts : [];
+    fatigueAiResult.innerHTML = `
+      <h4>AI-generated patterns to discuss</h4>
+      <p>${escapeHtml(payload.summary || "No summary returned.")}</p>
+      ${prompts.length ? `
+        <ul>
+          ${prompts.map((prompt) => `<li>${escapeHtml(prompt)}</li>`).join("")}
+        </ul>
+      ` : ""}
+    `;
+  } catch (error) {
+    fatigueAiResult.innerHTML = `<p>${escapeHtml(error.message || "Could not generate the AI summary.")}</p>`;
+  } finally {
+    aiFatigueSummaryButton.disabled = false;
+    aiFatigueSummaryButton.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span> AI summary';
+  }
+}
+
 function renderHistory() {
   const query = document.querySelector("#historySearch").value.trim().toLowerCase();
   const type = document.querySelector("#typeFilter").value;
@@ -1129,6 +1415,7 @@ function renderPatient() {
 
 function renderSettings() {
   sheetApiUrlInput.value = sheetApiUrl;
+  aiSummaryApiUrlInput.value = aiSummaryApiUrl;
 
   medicationSettingsList.innerHTML = presets.medications
     .map((medication, index) => `
@@ -1282,7 +1569,10 @@ function renderMedsPlanEditor() {
             <div class="meds-plan-editor-row">
               <label>
                 Medication
-                <input name="planMedication_${index}" type="text" list="medicationNamesList" value="${escapeHtml(item.medicationName)}" placeholder="Medication name" />
+                <span class="control-icon-field dropdown-icon-field">
+                  <input name="planMedication_${index}" type="text" list="medicationNamesList" value="${escapeHtml(item.medicationName)}" placeholder="Medication name" />
+                  <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+                </span>
               </label>
               <label>
                 Dose
@@ -1336,6 +1626,7 @@ function renderMedsPlanEditor() {
 function renderMedsPlan() {
   renderMedsPlanReadable();
   renderMedsPlanEditor();
+  enhanceSelects(medsPlanForm);
 }
 
 function medsPlanModalHtml() {
@@ -1453,6 +1744,7 @@ function renderActiveRoute() {
   if (state.route === "today") renderToday();
   if (state.route === "meds-plan") renderMedsPlan();
   if (state.route === "history") renderHistory();
+  if (state.route === "trends") renderTrends();
   if (state.route === "patient") renderPatient();
   if (state.route === "settings") renderSettings();
 }
@@ -1460,6 +1752,7 @@ function renderActiveRoute() {
 function render() {
   dateLabel.textContent = formatDisplayDate();
   renderActiveRoute();
+  enhanceSelects();
   updateSettingsSaveButton();
 }
 
@@ -1474,11 +1767,12 @@ function setRoute(route) {
   });
   renderActiveRoute();
   if (route === "history") renderExportCount();
+  enhanceSelects();
   updateSettingsSaveButton();
 }
 
 function hasUnsavedSettings() {
-  return dirtySettings.medication.size > 0 || dirtySettings.caregiver.size > 0 || dirtySettings.sheet;
+  return dirtySettings.medication.size > 0 || dirtySettings.caregiver.size > 0 || dirtySettings.sheet || dirtySettings.ai;
 }
 
 function updateSettingsSaveButton() {
@@ -1602,6 +1896,93 @@ function selectOptions(options, selected = "") {
   return options.map((option) => `<option value="${escapeHtml(option)}" ${option === selected ? "selected" : ""}>${escapeHtml(option)}</option>`).join("");
 }
 
+function customSelectLabel(select) {
+  return select.selectedOptions[0]?.textContent || select.options[0]?.textContent || "";
+}
+
+function closeCustomSelect(wrapper) {
+  if (!wrapper) return;
+  wrapper.classList.remove("is-open");
+  wrapper.querySelector(".custom-select-button")?.setAttribute("aria-expanded", "false");
+  wrapper.querySelector(".custom-select-menu")?.classList.add("is-hidden");
+}
+
+function closeCustomSelects(exceptWrapper = null) {
+  document.querySelectorAll("[data-custom-select-wrapper]").forEach((wrapper) => {
+    if (wrapper !== exceptWrapper) closeCustomSelect(wrapper);
+  });
+}
+
+function syncCustomSelect(wrapper) {
+  if (!wrapper) return;
+  const select = wrapper.querySelector("select");
+  const value = wrapper.querySelector(".custom-select-value");
+  const menu = wrapper.querySelector(".custom-select-menu");
+  if (!select || !value || !menu) return;
+
+  value.textContent = customSelectLabel(select);
+  menu.innerHTML = "";
+  Array.from(select.options).forEach((option) => {
+    const optionButton = document.createElement("button");
+    optionButton.className = `custom-select-option ${option.selected ? "is-selected" : ""}`;
+    optionButton.disabled = option.disabled;
+    optionButton.role = "option";
+    optionButton.type = "button";
+    optionButton.textContent = option.textContent;
+    optionButton.setAttribute("aria-selected", String(option.selected));
+    optionButton.addEventListener("click", () => {
+      select.value = option.value;
+      syncCustomSelect(wrapper);
+      closeCustomSelect(wrapper);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    menu.append(optionButton);
+  });
+}
+
+function enhanceSelects(root = document) {
+  root.querySelectorAll("select").forEach((select) => {
+    if (select.dataset.customSelect === "true") {
+      syncCustomSelect(select.closest("[data-custom-select-wrapper]"));
+      return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "custom-select";
+    wrapper.dataset.customSelectWrapper = "";
+
+    const button = document.createElement("button");
+    button.className = "custom-select-button";
+    button.type = "button";
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-haspopup", "listbox");
+    button.innerHTML = `
+      <span class="custom-select-value"></span>
+      <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+    `;
+
+    const menu = document.createElement("div");
+    menu.className = "custom-select-menu is-hidden";
+    menu.role = "listbox";
+
+    select.dataset.customSelect = "true";
+    select.classList.add("native-select-hidden");
+    select.tabIndex = -1;
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.append(select, button, menu);
+
+    button.addEventListener("click", () => {
+      const isOpen = wrapper.classList.contains("is-open");
+      closeCustomSelects(wrapper);
+      wrapper.classList.toggle("is-open", !isOpen);
+      button.setAttribute("aria-expanded", String(!isOpen));
+      menu.classList.toggle("is-hidden", isOpen);
+    });
+    select.addEventListener("change", () => syncCustomSelect(wrapper));
+    syncCustomSelect(wrapper);
+  });
+}
+
 function quickSelectField(name, label, options, selected) {
   return `
     <label>
@@ -1625,6 +2006,7 @@ function openEntryDialog(type) {
   document.querySelector("#entryEyebrow").textContent = "Quick log";
   dynamicFields.innerHTML = fieldsForType(type);
   entryForm.elements.notes.placeholder = type === "Food" ? foodNotesPlaceholder : defaultNotesPlaceholder;
+  enhanceSelects(entryForm);
   entryDialog.showModal();
 }
 
@@ -1872,6 +2254,16 @@ function demoMedicationSchedule(day) {
   return meds;
 }
 
+function demoFatigueSeverity(day) {
+  const wave = day % 6 === 0 ? 1 : day % 6 === 2 ? 0 : -1;
+  if (day < 8) return Math.min(10, 6 + wave);
+  if (day < 28) return Math.max(2, 4 + wave);
+  if (day < 42) return Math.min(10, 6 + wave);
+  if (day < 63) return Math.min(10, 8 + wave);
+  if (day < 76) return Math.max(3, 6 + wave);
+  return Math.max(2, 5 + wave);
+}
+
 function demoMedsPlan() {
   const plan = [
     ["Levetiracetam", "500mg", "08:00", "No food instruction", "Anti-seizure medicine. Demo example only."],
@@ -1921,13 +2313,15 @@ function buildDemoData() {
     });
 
     if (day % 2 === 0) {
-      const severity = day < 10 ? "6" : day < 35 ? "4" : day < 63 ? "7" : "5";
+      const severity = String(demoFatigueSeverity(day));
       entries.push(demoEntry(day, "10:15", "Symptom", {
-        symptom: day % 6 === 0 ? ["Headache", "Nausea"] : day % 4 === 0 ? ["Fatigue", "Appetite change"] : ["Fatigue"],
+        symptom: day % 6 === 0 ? ["Fatigue", "Headache", "Nausea"] : day % 4 === 0 ? ["Fatigue", "Appetite change"] : ["Fatigue"],
         severity,
-        notes: day < 35
+        notes: day < 28
           ? "Morning symptoms checked before medication and appointments. Improved with rest and small fluids."
-          : "Treatment fatigue more obvious today. Planned rest after hospital visit."
+          : day < 63
+            ? "Treatment fatigue more obvious today. Planned rest after hospital visit."
+            : "Fatigue still present but easier to pace with shorter visits and quieter evenings."
       }));
     }
 
@@ -2143,6 +2537,13 @@ document.querySelector("#historyTimeline").addEventListener("click", (event) => 
   if (!deleteButton) return;
   deleteEntry(deleteButton.dataset.deleteLog);
 });
+document.querySelectorAll("[data-trend-range]").forEach((button) => {
+  button.addEventListener("click", () => {
+    trendRange = button.dataset.trendRange;
+    renderTrends();
+  });
+});
+aiFatigueSummaryButton.addEventListener("click", requestFatigueAiSummary);
 exportScope.addEventListener("change", () => {
   const isRange = exportScope.value === "range";
   document.querySelectorAll(".export-date-field").forEach((field) => {
@@ -2166,6 +2567,13 @@ document.querySelectorAll("[data-meds-plan-view]").forEach((button) => {
     state.medsPlanView = button.dataset.medsPlanView;
     renderMedsPlan();
   });
+});
+document.addEventListener("click", (event) => {
+  if (event.target.closest("[data-custom-select-wrapper]")) return;
+  closeCustomSelects();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeCustomSelects();
 });
 medsPlanForm.addEventListener("input", updateMedsPlanFromForm);
 medsPlanForm.addEventListener("change", updateMedsPlanFromForm);
@@ -2214,10 +2622,12 @@ document.querySelector("#addCaregiverSetting").addEventListener("click", () => {
 saveSettingsTopButton.addEventListener("click", () => {
   if (saveSettingsTopButton.disabled) return;
   saveSheetApiUrl();
+  saveAiSummaryApiUrl();
   saveSettingsFromForm();
   dirtySettings.medication.clear();
   dirtySettings.caregiver.clear();
   dirtySettings.sheet = false;
+  dirtySettings.ai = false;
   renderSettings();
   updateSettingsSaveButton();
 });
@@ -2284,10 +2694,12 @@ settingsForm.addEventListener("click", (event) => {
   const saveButton = event.target.closest("[data-save-setting]");
   if (saveButton) {
     saveSheetApiUrl();
+    saveAiSummaryApiUrl();
     saveSettingsFromForm();
     dirtySettings.medication.clear();
     dirtySettings.caregiver.clear();
     dirtySettings.sheet = false;
+    dirtySettings.ai = false;
     renderSettings();
     updateSettingsSaveButton();
     return;
@@ -2306,12 +2718,18 @@ settingsForm.addEventListener("click", (event) => {
   dirtySettings.medication.clear();
   dirtySettings.caregiver.clear();
   dirtySettings.sheet = false;
+  dirtySettings.ai = false;
   renderSettings();
   updateSettingsSaveButton();
 });
 settingsForm.addEventListener("input", (event) => {
   if (event.target.matches("#sheetApiUrl")) {
     dirtySettings.sheet = true;
+    updateSettingsSaveButton();
+    return;
+  }
+  if (event.target.matches("#aiSummaryApiUrl")) {
+    dirtySettings.ai = true;
     updateSettingsSaveButton();
     return;
   }
@@ -2331,10 +2749,12 @@ settingsForm.addEventListener("input", (event) => {
 settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   saveSheetApiUrl();
+  saveAiSummaryApiUrl();
   saveSettingsFromForm();
   dirtySettings.medication.clear();
   dirtySettings.caregiver.clear();
   dirtySettings.sheet = false;
+  dirtySettings.ai = false;
   renderSettings();
   updateSettingsSaveButton();
 });

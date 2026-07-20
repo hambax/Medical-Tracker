@@ -1,0 +1,10 @@
+.DS_Store
+.vercel/
+.env
+.env.*
+*.local
+exports/
+private/
+*.csv
+*.pdf
+

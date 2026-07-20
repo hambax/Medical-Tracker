@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260719-today-meds" />
+    <link rel="stylesheet" href="./styles.css?v=20260720-dropdown-icons" />
     <script>
       const showSymbols = () => {
         document.documentElement.classList.remove("symbols-loading");
@@ -178,7 +178,7 @@
                   <span class="material-symbols-outlined">lock</span>
                   <div>
                     <strong>Local-first</strong>
-                    <p>No private Sheet endpoint ships with the competition copy.</p>
+                    <p>No private Sheet endpoint ships with the open demo.</p>
                   </div>
                 </div>
               </article>
@@ -186,8 +186,11 @@
               <article class="bento-card bento-card-story" id="story">
                 <div class="bento-copy">
                   <h3>How it helped our family</h3>
-                  <p>When my dad was living with a brain tumour, care became a stream of medication timing, nausea, headaches, appetite, confusion, energy, and quiet changes that were easy to miss. This tracker helped us bring clearer notes into conversations with clinicians and care with more confidence until his passing.</p>
-                  <p>It also helped share the load. Family, caregivers, and the patient could take shifts without starting from scratch: one glance showed which medicines had been taken, what was still coming up, and whether anything looked missed.</p>
+                  <p>When my dad was living with a brain tumour, every day carried a lot of small but important details.</p>
+                  <p>Medication timing. Nausea. Headaches. Appetite. Confusion. Energy. Quiet changes that were easy to miss when everyone was tired.</p>
+                  <p>Medical Tracker gave our family one shared place to write things down and bring clearer notes into conversations with clinicians.</p>
+                  <p>It also helped share the load. Family, caregivers, and the patient could take shifts without starting from scratch.</p>
+                  <p>At a glance, we could see which medicines had been taken, what was still coming up, and whether anything looked missed.</p>
                 </div>
               </article>
             </div>
@@ -218,6 +221,10 @@
             <button class="nav-button" data-route="history" type="button">
               <span class="material-symbols-outlined">history</span>
               <span class="nav-label">History</span>
+            </button>
+            <button class="nav-button" data-route="trends" type="button">
+              <span class="material-symbols-outlined">monitoring</span>
+              <span class="nav-label">Trends</span>
             </button>
             <button class="nav-button" data-demo-data type="button">
               <span class="material-symbols-outlined">database</span>
@@ -410,6 +417,41 @@
             <div id="historyTimeline" class="timeline"></div>
           </section>
 
+          <section class="route" data-route-panel="trends">
+            <section class="trend-panel" aria-labelledby="fatigueTrendTitle">
+              <div class="section-heading trend-heading">
+                <div>
+                  <h3 id="fatigueTrendTitle">Fatigue trend</h3>
+                  <p class="trend-subtitle">Read-only view based on Symptom logs marked Fatigue.</p>
+                </div>
+                <div class="trend-range-controls" role="group" aria-label="Fatigue trend date range">
+                  <button class="view-toggle is-active" data-trend-range="7" type="button">7 days</button>
+                  <button class="view-toggle" data-trend-range="30" type="button">30 days</button>
+                  <button class="view-toggle" data-trend-range="90" type="button">90 days</button>
+                  <button class="view-toggle" data-trend-range="all" type="button">All</button>
+                </div>
+              </div>
+
+              <div class="trend-stats" id="fatigueStats" aria-label="Fatigue summary"></div>
+              <div class="trend-chart-shell" id="fatigueChart"></div>
+            </section>
+
+            <section class="trend-insights" aria-labelledby="fatiguePatternsTitle">
+              <div class="section-heading">
+                <div>
+                  <h3 id="fatiguePatternsTitle">Patterns to discuss</h3>
+                  <p class="trend-subtitle">Non-diagnostic prompts for appointments and family handovers.</p>
+                </div>
+                <button class="ghost-button compact-button is-hidden" id="aiFatigueSummaryButton" type="button">
+                  <span class="material-symbols-outlined">auto_awesome</span>
+                  AI summary
+                </button>
+              </div>
+              <div class="trend-summary" id="fatigueSummary"></div>
+              <div class="trend-ai-result is-hidden" id="fatigueAiResult" aria-live="polite"></div>
+            </section>
+          </section>
+
           <section class="route" data-route-panel="patient">
             <form id="patientForm" class="patient-form">
               <section class="brain-visual-panel">
@@ -463,6 +505,19 @@
 
               <section class="settings-panel">
                 <div class="section-heading">
+                  <h3>Optional AI summaries</h3>
+                </div>
+                <div class="settings-row ai-settings-row">
+                  <label>
+                    Fatigue summary endpoint
+                    <input id="aiSummaryApiUrl" name="aiSummaryApiUrl" type="url" inputmode="url" placeholder="https://your-secure-api.example.com/fatigue-summary" />
+                  </label>
+                </div>
+                <p class="helper-text">For public demos, this must be a secure backend endpoint. Do not put an OpenAI API key in this app.</p>
+              </section>
+
+              <section class="settings-panel">
+                <div class="section-heading">
                   <h3>Default medications</h3>
                   <button class="text-button" id="addMedicationSetting" type="button">Add medication</button>
                 </div>
@@ -492,6 +547,10 @@
           <button class="nav-button" data-route="history" type="button">
             <span class="material-symbols-outlined">history</span>
             History
+          </button>
+          <button class="nav-button" data-route="trends" type="button">
+            <span class="material-symbols-outlined">monitoring</span>
+            Trends
           </button>
           <button class="nav-button" data-demo-data type="button">
             <span class="material-symbols-outlined">database</span>
@@ -626,6 +685,6 @@
 
     <div id="pdfPrintArea" class="pdf-print-area" aria-hidden="true"></div>
 
-    <script src="./app.js?v=20260719-today-meds"></script>
+    <script src="./app.js?v=20260720-dropdown-icons"></script>
   </body>
 </html>
