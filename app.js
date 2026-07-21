@@ -581,6 +581,15 @@ function timeToMinutes(time) {
   return hour * 60 + minute;
 }
 
+function currentTimeMinutes() {
+  return timeToMinutes(new Date().toTimeString().slice(0, 5));
+}
+
+function isFutureTodayEntry(entry, nowMinutes = currentTimeMinutes()) {
+  const entryMinutes = timeToMinutes(entry.time);
+  return entry.date === todayString() && Number.isFinite(entryMinutes) && entryMinutes > nowMinutes;
+}
+
 function normalizedMedName(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -642,10 +651,9 @@ function doseQuantityLabel(item) {
   return `${countText} ${unitName}${rounded === 1 ? "" : "s"}`;
 }
 
-function medsPlanItemStatus(item, isGiven, isNext) {
+function medsPlanItemStatus(item, isGiven, isNext, nowMinutes = currentTimeMinutes()) {
   if (isGiven) return "Given";
   if (isNext) return "Next";
-  const nowMinutes = timeToMinutes(new Date().toTimeString().slice(0, 5));
   return timeToMinutes(item.time) < nowMinutes ? "Missed" : "Later";
 }
 
@@ -659,7 +667,8 @@ function renderTodayMedsPlan() {
     return;
   }
 
-  const todayMedicationEntries = state.entries.filter((entry) => entry.date === todayString() && entry.type === "Medication");
+  const nowMinutes = currentTimeMinutes();
+  const todayMedicationEntries = state.entries.filter((entry) => entry.date === todayString() && entry.type === "Medication" && !isFutureTodayEntry(entry, nowMinutes));
   const matchedIds = matchedTodayMedsPlanIds(planItems, todayMedicationEntries);
   const nextItem = planItems.find((item) => !matchedIds.has(item.id));
   const givenCount = matchedIds.size;
@@ -671,7 +680,7 @@ function renderTodayMedsPlan() {
   container.innerHTML = planItems.map((item) => {
     const isGiven = matchedIds.has(item.id);
     const isNext = nextItem?.id === item.id;
-    const status = medsPlanItemStatus(item, isGiven, isNext);
+    const status = medsPlanItemStatus(item, isGiven, isNext, nowMinutes);
     const quantity = doseQuantityLabel(item);
     const detail = [item.dose, quantity, foodInstructionText(item.foodInstruction)].filter(Boolean).join(" · ");
     return `
@@ -2291,6 +2300,9 @@ function buildDemoData() {
   demoDate.start.setDate(demoDate.start.getDate() - 89);
 
   const entries = [];
+  const finalDemoDay = 89;
+  const nowMinutes = currentTimeMinutes();
+  const isFutureDemoTime = (day, time) => day === finalDemoDay && timeToMinutes(time) > nowMinutes;
   const milestoneNotes = [
     [0, "09:20", "Diagnosis meeting", "MRI and neurosurgery review discussed a suspected high-grade brain tumour. Family started a shared log for medicines, symptoms, questions, and appointments."],
     [2, "17:10", "Pre-surgery planning", "Blood tests, medication review, and consent appointment completed. Patient anxious but relieved to have a plan."],
@@ -2308,11 +2320,11 @@ function buildDemoData() {
   ];
 
   for (let day = 0; day < 90; day += 1) {
-    demoMedicationSchedule(day).forEach(([time, medicationName, dose, notes], index) => {
+    demoMedicationSchedule(day).filter(([time]) => !isFutureDemoTime(day, time)).forEach(([time, medicationName, dose, notes], index) => {
       entries.push(demoMed(day, time, medicationName, dose, notes, index % 2 === 0 ? "Caregiver A" : "Caregiver B"));
     });
 
-    if (day % 2 === 0) {
+    if (day % 2 === 0 && !isFutureDemoTime(day, "10:15")) {
       const severity = String(demoFatigueSeverity(day));
       entries.push(demoEntry(day, "10:15", "Symptom", {
         symptom: day % 6 === 0 ? ["Fatigue", "Headache", "Nausea"] : day % 4 === 0 ? ["Fatigue", "Appetite change"] : ["Fatigue"],
@@ -2325,7 +2337,7 @@ function buildDemoData() {
       }));
     }
 
-    if (day % 3 === 1) {
+    if (day % 3 === 1 && !isFutureDemoTime(day, "13:00")) {
       entries.push(demoEntry(day, "13:00", "Food", {
         mealType: "Lunch",
         notes: day < 35
@@ -2334,7 +2346,7 @@ function buildDemoData() {
       }));
     }
 
-    if (day % 4 === 2) {
+    if (day % 4 === 2 && !isFutureDemoTime(day, "18:45")) {
       entries.push(demoEntry(day, "18:45", "Feeling", {
         feeling: day < 21 ? ["Anxious", "Tired"] : day < 63 ? ["Tired", "Low"] : ["Tired"],
         severity: day < 21 ? "6" : "5",
@@ -2342,7 +2354,7 @@ function buildDemoData() {
       }));
     }
 
-    if (day % 7 === 4) {
+    if (day % 7 === 4 && !isFutureDemoTime(day, "20:10")) {
       entries.push(demoEntry(day, "20:10", "Behaviour", {
         behaviour: day < 30 ? ["Forgetfulness", "Poor concentration"] : ["Poor concentration", "Withdrawal"],
         severity: "4",
@@ -2352,6 +2364,7 @@ function buildDemoData() {
   }
 
   milestoneNotes.forEach(([day, time, heading, note]) => {
+    if (isFutureDemoTime(day, time)) return;
     entries.push(demoEntry(day, time, "Note", {
       notes: `${heading}: ${note}`
     }));
