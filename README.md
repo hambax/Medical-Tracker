@@ -41,6 +41,17 @@ http://localhost:4173
 
 ## Build Week Submission
 
+Medical tracker was built with ChatGPT 5.5 and 5.6 Sol As the planning and thought partners, mostly using the voice dictation features while out on a walk with the dog. Then using the codex remote feature, the decisions that were made and plans that were proposed while out were sent back to Codex, which was then the main coding build partner that implemented the new features into the product. 
+
+Codex was used throughout to build the architecture and also to implement the script that connected the Google Sheets back-end. 
+Codex maintained this project across 2 months of intense care and maintained flawless Uptime and data quality and reliability of the product.
+The whole project has been refactored in the past week during this OpenAI Build Week competition time using Codex and GPT-5.6 Sol in order to make it ready for submission and open sourcing.
+Some new features have been added, the UI has been modified and tidied up, but fundamentally the functionality remains the same as the core idea of having a medical tracking tool that is available as a web app that is React based, that connects to a Google Sheet backend, and is very easy to use for family members and nurses and doctors who may not be technical. 
+
+This app has been requested to be publicly released by everyone that has used it so far, And it is the intention that it goes on to help many other families and caregivers.
+
+It is provided with a github.com repo that includes instructions for the agent that will help anyone who has access to ChatGPT or other agents to To pick up and configure the tool for their needs, including their own personal Google Sheet back end and it is intended that the app is entirely free to use. 
+
 For the public demo story, start with:
 
 ```text
