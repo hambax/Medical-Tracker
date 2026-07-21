@@ -1,5 +1,9 @@
 # Medical Tracker Build Week Submission
 
+Live demo: https://medical-tracker-coral.vercel.app/
+
+Public repo: https://github.com/hambax/Medical-Tracker
+
 ## Project Summary
 
 Medical Tracker is a family-first care logging app for serious illness. It helps families and caregivers share the load by tracking medication timing, symptoms, fatigue trends, food, mood, behaviour, notes, and appointment-ready exports in one calm timeline.
@@ -75,4 +79,3 @@ Medical Tracker is not medical advice. It is a calm, practical way to help famil
 - Built with: `Codex, HTML, CSS, JavaScript, Google Apps Script, Google Sheets, Vercel-ready static hosting`
 - Repo focus: `Agent-guided private deployment for families`
 - Impact: `Helps caregivers share shifts, reduce missed medication context, and bring clearer notes to appointments.`
-

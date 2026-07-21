@@ -4,6 +4,8 @@ Medical Tracker is a family-first care logging app for serious illness. It helps
 
 This repo is prepared as an open demo product. The first screen explains the product, the workflow, and the family story behind it; the tracker remains a static web app that can run locally or on a free hosting service such as Vercel.
 
+Live demo: https://medical-tracker-coral.vercel.app/
+
 ## Data Safety
 
 This demo does **not** include a default private Google Sheets endpoint. Sync is off until someone explicitly adds an Apps Script Web App URL in Settings.
