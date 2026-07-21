@@ -604,16 +604,16 @@ function doseMatchesPlan(entry, item) {
   return normalizedDose(entry.dose) === normalizedDose(item.dose);
 }
 
-function matchedTodayMedsPlanIds(planItems, todayMedicationEntries) {
+function matchedTodayMedsPlanEntries(planItems, todayMedicationEntries) {
   const unmatched = [...planItems];
-  const matched = new Set();
+  const matched = new Map();
   sortEntries(todayMedicationEntries).reverse().forEach((entry) => {
     const candidates = unmatched
       .filter((item) => doseMatchesPlan(entry, item))
       .sort((a, b) => Math.abs(timeToMinutes(entry.time) - timeToMinutes(a.time)) - Math.abs(timeToMinutes(entry.time) - timeToMinutes(b.time)));
     const selected = candidates[0];
     if (!selected) return;
-    matched.add(selected.id);
+    matched.set(selected.id, entry);
     unmatched.splice(unmatched.indexOf(selected), 1);
   });
   return matched;
@@ -657,6 +657,35 @@ function medsPlanItemStatus(item, isGiven, isNext, nowMinutes = currentTimeMinut
   return timeToMinutes(item.time) < nowMinutes ? "Missed" : "Later";
 }
 
+function todayMedsPlanActions(item, status, matchedEntry) {
+  if (status === "Next") {
+    return `
+      <button class="today-dose-button" data-give-plan-dose="${escapeHtml(item.id)}" type="button">
+        <span class="material-symbols-outlined">check_circle</span>
+        Give dose now
+      </button>
+    `;
+  }
+
+  if (status === "Given" && matchedEntry?.id) {
+    return `
+      <details class="today-med-menu">
+        <summary aria-label="More actions for ${escapeHtml(item.medicationName)}">
+          <span class="material-symbols-outlined">more_horiz</span>
+        </summary>
+        <div class="today-med-menu-popover">
+          <button data-unmark-plan-dose="${escapeHtml(matchedEntry.id)}" type="button">
+            <span class="material-symbols-outlined">undo</span>
+            Mark as not given
+          </button>
+        </div>
+      </details>
+    `;
+  }
+
+  return "";
+}
+
 function renderTodayMedsPlan() {
   const container = document.querySelector("#todayMedsPlan");
   const summary = document.querySelector("#todayMedsSummary");
@@ -669,7 +698,8 @@ function renderTodayMedsPlan() {
 
   const nowMinutes = currentTimeMinutes();
   const todayMedicationEntries = state.entries.filter((entry) => entry.date === todayString() && entry.type === "Medication" && !isFutureTodayEntry(entry, nowMinutes));
-  const matchedIds = matchedTodayMedsPlanIds(planItems, todayMedicationEntries);
+  const matchedEntries = matchedTodayMedsPlanEntries(planItems, todayMedicationEntries);
+  const matchedIds = new Set(matchedEntries.keys());
   const nextItem = planItems.find((item) => !matchedIds.has(item.id));
   const givenCount = matchedIds.size;
 
@@ -681,16 +711,20 @@ function renderTodayMedsPlan() {
     const isGiven = matchedIds.has(item.id);
     const isNext = nextItem?.id === item.id;
     const status = medsPlanItemStatus(item, isGiven, isNext, nowMinutes);
+    const matchedEntry = matchedEntries.get(item.id);
     const quantity = doseQuantityLabel(item);
     const detail = [item.dose, quantity, foodInstructionText(item.foodInstruction)].filter(Boolean).join(" · ");
     return `
-      <article class="today-med-item ${isGiven ? "is-given" : ""} ${isNext ? "is-next" : ""}">
+      <article class="today-med-item ${isGiven ? "is-given" : ""} ${isNext ? "is-next" : ""}" data-plan-dose="${escapeHtml(item.id)}">
         <span class="today-med-time">${escapeHtml(formatPlanTime(item.time || "No time set"))}</span>
         <div class="today-med-body">
           <h4>${escapeHtml(item.medicationName)}</h4>
           <p>${escapeHtml(detail || "No dose set")}</p>
         </div>
-        <span class="today-med-status status-${status.toLowerCase()}">${escapeHtml(status)}</span>
+        <div class="today-med-actions">
+          <span class="today-med-status status-${status.toLowerCase()}">${escapeHtml(status)}</span>
+          ${todayMedsPlanActions(item, status, matchedEntry)}
+        </div>
       </article>
     `;
   }).join("");
@@ -1667,6 +1701,43 @@ function useMedsPlanItem(id) {
   if (entryForm.elements.dose) entryForm.elements.dose.value = item.dose || medicationDefaultDose(item.medicationName);
 }
 
+function saveEntryRecord(entry, options = {}) {
+  state.entries.push(entry);
+  saveEntries();
+  render();
+  if (options.route) setRoute(options.route);
+
+  if (syncEnabled()) {
+    appendEntryToSheet(entry)
+      .then((didSync) => {
+        if (didSync) refreshEntriesFromSheetSoon();
+      })
+      .catch(() => {});
+  }
+}
+
+function givePlannedDoseNow(itemId) {
+  const item = activeMedsPlan().find((planItem) => planItem.id === itemId);
+  if (!item) return;
+
+  const now = new Date();
+  const plannedTime = item.time ? `Planned time: ${formatPlanTime(item.time)}.` : "";
+  const notes = [plannedTime, item.notes].filter(Boolean).join(" ");
+  const entry = {
+    id: crypto.randomUUID(),
+    type: "Medication",
+    date: todayString(),
+    time: now.toTimeString().slice(0, 5),
+    medicationName: item.medicationName,
+    dose: item.dose || medicationDefaultDose(item.medicationName),
+    givenBy: "",
+    notes,
+    createdAt: now.toISOString()
+  };
+
+  saveEntryRecord(entry, { route: "today" });
+}
+
 function updateMedsPlanFromForm(options = {}) {
   const shouldMarkDirty = options.markDirty !== false;
   const data = new FormData(medsPlanForm);
@@ -2144,20 +2215,8 @@ async function handleEntrySubmit(event) {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString()
   };
-  state.entries.push(savedEntry);
-
-  saveEntries();
   entryDialog.close();
-  render();
-  setRoute("today");
-
-  if (syncEnabled()) {
-    appendEntryToSheet(savedEntry)
-      .then((didSync) => {
-        if (didSync) refreshEntriesFromSheetSoon();
-      })
-      .catch(() => {});
-  }
+  saveEntryRecord(savedEntry, { route: "today" });
 }
 
 function deleteEntry(id) {
@@ -2497,6 +2556,18 @@ document.querySelectorAll("[data-open-tracker]").forEach((button) => {
 });
 demoDataButtons.forEach((button) => {
   button.addEventListener("click", loadDemoData);
+});
+document.querySelector("#todayMedsPlan").addEventListener("click", (event) => {
+  const giveButton = event.target.closest("[data-give-plan-dose]");
+  if (giveButton) {
+    givePlannedDoseNow(giveButton.dataset.givePlanDose);
+    return;
+  }
+
+  const unmarkButton = event.target.closest("[data-unmark-plan-dose]");
+  if (unmarkButton) {
+    deleteEntry(unmarkButton.dataset.unmarkPlanDose);
+  }
 });
 
 navToggle.addEventListener("click", () => {
